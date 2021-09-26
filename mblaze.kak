@@ -65,5 +65,10 @@ define-command mblaze-show -params 1 %{
         edit! -scratch *mblaze-show*
         execute-keys "!mshow %arg{1}<ret>gg"
         set-option buffer filetype mail
+
+        evaluate-commands -draft %{ # detect patches in mail and add diff highlighter
+            execute-keys '%s^diff\b<ret>'
+            add-highlighter buffer/ ref diff
+        }
     }
 }
