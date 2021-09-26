@@ -30,7 +30,8 @@ define-command -hidden mblaze-apply-shell -params 1 %{
     evaluate-commands -itersel -draft %{
         nop %sh{
             cmd=$1
-            eval "set -- $kak_quoted_opt_mblaze_files"
+            echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_files}" > $kak_command_fifo
+            eval "set -- $(cat $kak_response_fifo)"
             shift $((kak_cursor_line - 1))
             printf '%s' "$1" | eval "$cmd"
         }
@@ -51,7 +52,8 @@ define-command mblaze-delete %{
 define-command -hidden mblaze-apply-cmd -params 1.. %{
     evaluate-commands -itersel -draft %{
         %arg{@} %sh{
-            eval "set -- $kak_quoted_opt_mblaze_files"
+            echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_files}" > $kak_command_fifo
+            eval "set -- $(cat $kak_response_fifo)"
             shift $((kak_cursor_line - 1))
             printf '%s' "$1"
         }
