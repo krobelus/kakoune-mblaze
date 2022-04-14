@@ -10,7 +10,7 @@ define-command mblaze-inbox %{
     edit! -scratch *mblaze-inbox*
     execute-keys '!%opt{mblaze_inbox_cmd}<a-!><ret>'
     eval -draft %{
-        execute-keys '%<a-s>H'
+        execute-keys '%<a-s>_'
         set-option buffer mblaze_files %val{selections}
     }
     execute-keys '%|mscan<ret>gg'
@@ -63,7 +63,8 @@ define-command -hidden mblaze-apply-cmd -params 1.. %{
 define-command mblaze-show -params 1 %{
     evaluate-commands -try-client %opt{mblaze_show_client} %{
         edit! -scratch *mblaze-show*
-        execute-keys "!mshow %arg{1}<ret>gg"
+        set-register | "mshow '%arg{1}'"
+        execute-keys "!<ret>gg"
         set-option buffer filetype mail
         add-highlighter buffer/ wrap -word -marker '↪'
 
