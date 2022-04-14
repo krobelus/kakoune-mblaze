@@ -67,7 +67,7 @@ define-command mblaze-show -params 1 %{
         set-option buffer filetype mail
         add-highlighter buffer/ wrap -word -marker '↪'
 
-        evaluate-commands -draft %{ # detect patches in mail and add diff highlighter
+        evaluate-commands -verbatim -draft try %{ # detect patches in mail and add diff highlighter
             execute-keys '%s^diff\b<ret>'
             add-highlighter buffer/ ref diff
         }
