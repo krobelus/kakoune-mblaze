@@ -1,4 +1,4 @@
-declare-option str mblaze_inbox_cmd
+declare-option -hidden str-list mblaze_last_list
 declare-option str mblaze_archive_cmd
 declare-option str mblaze_delete_cmd
 
@@ -6,11 +6,13 @@ declare-option -hidden str mblaze_show_client ''
 declare-option -hidden str mblaze_last_sel ''
 declare-option -hidden str-list mblaze_files
 
-define-command mblaze-inbox %{
+define-command mblaze-list -params .. %{
+    set-option global mblaze_last_list %arg{@}
     edit! -scratch *mblaze-inbox*
-    execute-keys '!%opt{mblaze_inbox_cmd}<a-!><ret>'
+    set-register | "%arg{@}"
+    execute-keys '!<ret>'
     eval -draft %{
-        execute-keys '%<a-s>_'
+        try %{ execute-keys '%<a-s>_' } catch %{ fail no messages found }
         set-option buffer mblaze_files %val{selections}
     }
     execute-keys '%|mscan<ret>gg'
@@ -24,6 +26,9 @@ define-command mblaze-inbox %{
 
     hook buffer NormalIdle .* %{ mblaze-apply-cmd mblaze-show }
 }
+complete-command mblaze-list file
+
+define-command mblaze-refresh %{ mblaze-list %opt{mblaze_last_list} }
 
 define-command -hidden mblaze-apply-shell -params 1 %{
     set-option global mblaze_last_sel %val{selection_desc}
@@ -36,7 +41,7 @@ define-command -hidden mblaze-apply-shell -params 1 %{
             printf '%s' "$1" | eval "$cmd"
         }
     }
-    mblaze-inbox
+    mblaze-refresh
     select %opt{mblaze_last_sel}
     execute-keys vv
 }
