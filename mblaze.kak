@@ -24,7 +24,10 @@ define-command mblaze-list -params .. %{
     map buffer normal a ':mblaze-archive<ret>'
     map buffer normal d ':mblaze-delete<ret>'
 
-    hook buffer NormalIdle .* %{ mblaze-apply-cmd mblaze-show }
+    hook buffer NormalIdle .* %{ evaluate-commands -draft %{
+        execute-keys ,
+        mblaze-apply-cmd mblaze-show
+    }}
 }
 complete-command mblaze-list file
 
