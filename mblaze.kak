@@ -71,7 +71,7 @@ define-command -hidden mblaze-apply-cmd -params 1.. %{
 define-command mblaze-show -params 1 %{
     evaluate-commands -try-client %opt{mblaze_show_client} %{
         edit! -scratch *mblaze-show*
-        set-register | "mshow '%arg{1}'"
+        set-register | "WIDTH=$kak_window_width mshow '%arg{1}'"
         execute-keys "!<ret>gg"
         set-option buffer filetype mail
         add-highlighter buffer/ wrap -word -marker '↪'
