@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+thread=
+if [ "$1" = -thread ]; then
+    thread='='
+    shift
+fi
+
+[ "$1" = kak_command_fifo ]
+[ "$2" = kak_response_fifo ]
+selection_descs=$3
+
+mailseq=$(mktemp ${TMPDIR:-/tmp}/kak-mblaze-list-files.XXXXXX)
+echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_scanned_files}" >$kak_command_fifo
+eval "set -- $(cat $kak_response_fifo)"
+printf '%s\n' "$@" >"$mailseq"
+set -- $(
+    for selection_desc in $selection_descs
+    do
+        printf ' '
+        echo "$selection_desc" | (
+            IFS=., read anchor_line _ cursor_line _
+            if [ $anchor_line -lt $cursor_line ]; then
+                printf %s $anchor_line$thread:$cursor_line$thread
+            else
+                printf %s $cursor_line$thread:$anchor_line$thread
+            fi
+        )
+    done
+)
+MAILSEQ="$mailseq" mseq -r "$@"
+rm "$mailseq"
