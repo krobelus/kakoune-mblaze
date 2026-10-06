@@ -17,7 +17,7 @@ kak -e 'doc mblaze'
 === Listing and showing messages
 
 `mblaze-scan` pipes the output of the given shell script into `mscan` and
-shows the result in an \*mblaze-scan* buffer.
+shows the result in an `\*mblaze-scan*` buffer.
 Example:
 
 [source,kak]
@@ -25,9 +25,9 @@ Example:
 mblaze-scan %{mlist $(mdirs) | mthread}
 ----
 
-Inside \*mblaze-scan*, you can run
+Inside `\*mblaze-scan*`, you can run
 
-* `mblaze-show` to show selected messages in an \*mblaze-show* buffer
+* `mblaze-show` to show selected messages in an `\*mblaze-show*` buffer
 * `mblaze-refresh` to update the scan buffer by re-running its command
 * `mblaze-next-thread` or `mblaze-previous-thread` to move the main cursor to the next or previous thread start
 
@@ -35,9 +35,9 @@ Inside \*mblaze-scan*, you can run
 
 Most `mblaze-*` commands operate on the "current message(s)", which is defined as follows:
 
-* in an \*mblaze-scan* buffer, the messages covered by the selections.
+* in an `\*mblaze-scan*` buffer, the messages covered by the selections.
   Commands that operate on only one message only consider the main cursor.
-* in an \*mblaze-show* buffer, the messages shown.
+* in an `\*mblaze-show*` buffer, the messages shown.
   Commands that operate on only one message currently fail in show buffers
   where multiple messages are shown.
 
@@ -57,7 +57,7 @@ new evaluate-commands %{ set-option global mblaze_autoshow_client %val{client} }
 `mblaze-pipe-to <command>` writes the <<current-message(s),current messages>>
 to the command via standard input, one filename per line, and then calls
 `mblaze-refresh` if called from a scan buffer.
-The command's output is currently shown in the \*debug* buffer.
+The command's output is currently shown in the `\*debug*` buffer.
 For example:
 
 [source,kak]
