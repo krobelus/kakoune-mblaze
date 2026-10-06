@@ -122,4 +122,5 @@ This plugin is fairly new, so some behavior changes are expected.
 == Contributing
 
 Send feedback and patches to
-https://lists.sr.ht/~krobelus/kakoune[~krobelus/kakoune] or use GitHub.
+mailto:\~krobelus/kakoune@lists.sr.ht[~krobelus/kakoune@lists.sr.ht] (see
+https://lists.sr.ht/\~krobelus/kakoune[public archives]) or use GitHub.
