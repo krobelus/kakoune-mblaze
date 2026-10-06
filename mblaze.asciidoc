@@ -96,7 +96,7 @@ in the current directory and open them, do:
 [source,kak]
 ----
 define-command -override mblaze-open-mime-part -params 3 %{
-    evaluate-commands %sh{
+    nop %sh{
         message_file=$1 part=$2 mime_type=$3
         mshow -n -x "$message_file" "$part"
         xdg-open "$part"
