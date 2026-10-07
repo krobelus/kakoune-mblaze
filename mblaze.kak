@@ -349,7 +349,8 @@ define-command -hidden mblaze-apply-command-and-refresh -params 1.. %{
 
 define-command -hidden mblaze-draft-message -params 1.. %{
     evaluate-commands %sh{
-        case "$1" in (mfwd | mrep) {
+        case "$1" in
+        (mrep | mfwd) {
             if ! message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
                 kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
             then {
