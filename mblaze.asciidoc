@@ -77,8 +77,7 @@ argument, to pipe the whole threads as listed in the scan buffer.
 `mblaze-reply` and `mblaze-forward` wrap `mrep(1)` and `mfwd(1)` to create and
 edit a draft reply to or forward of the <<current-message(s),current message>>.
 
-`mblaze-send` sends the message draft in the current buffer with `mcom -send`,
-`mrep -send` or `mfwd -send`.
+`mblaze-send` sends the message draft in the current buffer with `mcom -send`.
 
 === MIME parts
 

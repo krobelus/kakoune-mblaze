@@ -202,9 +202,15 @@ define-command mblaze-send -docstring %{
 send the current draft buffer with mcom
 } %{
     evaluate-commands %sh{
-        if ! "$kak_opt_mblaze_mcom_command" -send -r "${kak_buffile}" >&2; then
+        if ! mcom -send -r "${kak_buffile}" >&2; then
             echo "fail %{failed to send email, see *debug* buffer}"
             exit
+        fi
+        if [ -n "$kak_opt_mblaze_on_sent" ]; then
+            eval "set -- $kak_quoted_opt_mblaze_on_sent"
+            "$@" >&2
+            mseq -f | mseq -S >&2
+            echo "set-option buffer mblaze_on_sent"
         fi
         echo "delete-buffer %val{buffile}"
     }
@@ -361,10 +367,23 @@ define-command -hidden mblaze-draft-message -params 1.. %{
                 echo 'fail %{missing message file}'
                 exit
             fi
+            kakquote() {
+                printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
+            }
             ifs=$IFS
             IFS=$'\n'
             set -- "$@" -- $message_files
+            set_on_send=$(
+                printf 'set-option buffer mblaze_on_sent mflag -%s --' \
+                    $(case "$1" in (mrep) echo R;; (mfwd) echo P;; esac)
+                for message_file in $message_files
+                do
+                    printf ' %s' "$(kakquote "$message_file")"
+                done
+            )
             IFS=$ifs
+        (*)
+            set_on_send=
         }
         esac
         editor=$(mktemp ${TMPDIR:-/tmp}/kakoune-mblaze-draft-message.XXXXXX)
@@ -378,9 +397,9 @@ define-command -hidden mblaze-draft-message -params 1.. %{
         kakquote() {
             printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
         }
-        printf %s "edit $(kakquote "$draft")"
+        printf '%s\n' "edit $(kakquote "$draft")"
+        printf '%s\n' "$set_on_send"
     }
-    set-option buffer mblaze_mcom_command %arg{1}
 }
 
 define-command -hidden mblaze-next-or-previous-thread -params 1 %{
@@ -423,5 +442,5 @@ declare-option -hidden str-list mblaze_shown_files
 declare-option -hidden str mblaze_effective_show_client
 declare-option -hidden str mblaze_show_buffer_name
 
-# For mblaze-compose, mblaze-reply, mblaze-forward, mblaze-send
-declare-option -hidden str mblaze_mcom_command
+# For mblaze-reply, mblaze-forward, mblaze-send
+declare-option -hidden str-list mblaze_on_sent
