@@ -249,8 +249,8 @@ for each argument, call mblaze-open-mime-part with three arguments:
     }
 }
 complete-command mblaze-open-named-mime-parts shell-script-candidates %{
-    dir=$(mktemp -d ${TMPDIR:-/tmp}/kakoune-mblaze-open-named-mime-parts.XXXXXX)
-    mkfifo $dir/fifo
+    tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/kakoune-mblaze-open-named-mime-parts.XXXXXX)
+    mkfifo $tmpdir/fifo
     echo 'evaluate-commands -client '$kak_client' %{
         nop %sh{
             set -- $("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
@@ -261,12 +261,12 @@ complete-command mblaze-open-named-mime-parts shell-script-candidates %{
                     gsub(/.*name="|"$/, "")
                     print
                 }
-            '\'' >'$dir/fifo'
+            '\'' >'$tmpdir/fifo'
         }
     }' | kak -p $kak_session
-    cat $dir/fifo
-    rm $dir/fifo
-    rmdir $dir
+    cat $tmpdir/fifo
+    rm $tmpdir/fifo
+    rmdir $tmpdir
 }
 
 define-command mblaze-open-html-mime-part -docstring %{
