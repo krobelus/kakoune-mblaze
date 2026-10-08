@@ -382,9 +382,10 @@ define-command -hidden mblaze-draft-message -params 1.. %{
                 done
             )
             IFS=$ifs
+        } ;;
         (*)
             set_on_send=
-        }
+            ;;
         esac
         editor=$(mktemp ${TMPDIR:-/tmp}/kakoune-mblaze-draft-message.XXXXXX)
         echo >"$editor" '#!/bin/sh
