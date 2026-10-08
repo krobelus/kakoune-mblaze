@@ -16,19 +16,19 @@ kak -e 'doc mblaze'
 
 === Listing and showing messages
 
-`mblaze-scan` pipes the output of the given shell script into `mscan` and
+`mblaze-scan` pipes the output of the given shell script into `mscan(1)` and
 shows the result in an `\*mblaze-scan*` buffer.
 Example:
 
 [source,kak]
 ----
-mblaze-scan %{mlist $(mdirs) | mthread}
+mblaze-scan %{ mlist $(mdirs) | mthread }
 ----
 
 Inside `\*mblaze-scan*`, you can run
 
-* `mblaze-show` to show selected messages in an `\*mblaze-show*` buffer
-* `mblaze-refresh` to update the scan buffer by re-running its command
+* `mblaze-show` to use `mshow(1)` to render selected messages in an `\*mblaze-show*` buffer
+* `mblaze-refresh` to update a scan buffer by re-running its command
 * `mblaze-next-thread` or `mblaze-previous-thread` to move the main cursor to the next or previous thread start
 
 === Current message(s)
@@ -44,7 +44,7 @@ Most `mblaze-*` commands operate on the "current message(s)", which is defined a
 === Auto-rendering the current message
 
 To show the <<current-message(s),current message>> in another client as you
-browse the scan buffer, set `mblaze_autoshow_client`.  For example:
+browse a scan buffer, set `mblaze_autoshow_client`.  For example:
 
 [source,kak]
 ----
@@ -52,10 +52,10 @@ mblaze-scan %{ mlist $(mdirs) | mthread }
 new evaluate-commands %{ set-option global mblaze_autoshow_client %val{client} }
 ----
 
-=== Operating on messages
+=== Passing current messages to shell commands
 
 `mblaze-pipe-to <command>` writes the <<current-message(s),current messages>>
-to the command via standard input, one filename per line, and then calls
+to the given command's standard input, one filename per line, and then calls
 `mblaze-refresh` if called from a scan buffer.
 The command's output is currently shown in the `\*debug*` buffer.
 For example:
@@ -67,8 +67,9 @@ mblaze-pipe-to %{ mrefile "$(mhdr -h maildir ~/.mblaze/profile)"/archive }
 
 For this `mrefile` use case, there is a convenience wrapper `mblaze-refile <maildir_folder>`.
 
-In a scan buffer, `mblaze-pipe-to` and `mblaze-refile` support the `-thread`
-argument, to pipe the whole threads as listed in the scan buffer.
+In a scan buffer with a threaded view as created by `mthread(1)`, the
+`mblaze-pipe-to` and `mblaze-refile` commands can be passed the `-thread`
+option, to pipe whole threads.
 
 === Writing messages
 
@@ -77,16 +78,15 @@ argument, to pipe the whole threads as listed in the scan buffer.
 `mblaze-reply` and `mblaze-forward` wrap `mrep(1)` and `mfwd(1)` to create and
 edit a draft reply to or forward of the <<current-message(s),current message>>.
 
-`mblaze-send` sends the message draft in the current buffer with `mcom -send`.
+`mblaze-send` sends the message draft in the current buffer with `mcom(1)`.
 
 === MIME parts
 
 `mblaze-open-named-mime-parts <part_filename>...` opens the given named MIME
 parts (such as attachments) from the current message.
 
-`mblaze-open-html-mime-part` opens the unique unnamed `text/html` part of the
-current message. It fails if the message has no such part or has multiple
-unnamed `text/html` parts.
+`mblaze-open-html-mime-part` opens the unique unnamed `text/html` part of
+the current message.
 
 Both commands call `mblaze-open-mime-part <message_file> <part> <mime_type>`
 which needs to be overridden by the user.  For example, to save MIME parts
