@@ -351,17 +351,20 @@ define-command -hidden mblaze-draft-message -params 1.. %{
     evaluate-commands %sh{
         case "$1" in
         (mrep | mfwd) {
-            if ! message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+            if ! message_files=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
                 kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
             then {
                 echo 'fail %{failed to find message file}'
                 exit
             } fi
-            case $message_file in
-                ('') echo 'fail %{missing message file}'; exit ;;
-                (*$'\n'*) echo 'fail %{multiple message files}'; exit ;;
-            esac
-            set -- "$@" -- "$message_file"
+            if [ -z "$message_files" ]; then
+                echo 'fail %{missing message file}'
+                exit
+            fi
+            ifs=$IFS
+            IFS=$'\n'
+            set -- "$@" -- $message_files
+            IFS=$ifs
         }
         esac
         editor=$(mktemp ${TMPDIR:-/tmp}/kakoune-mblaze-draft-message.XXXXXX)
