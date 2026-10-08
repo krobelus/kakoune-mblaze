@@ -30,5 +30,5 @@ set -- $(
         )
     done
 )
-MAILSEQ="$mailseq" mseq -r "$@"
+MAILSEQ="$mailseq" mseq -rf -- "$@"
 rm "$mailseq"

@@ -115,7 +115,7 @@ In a scan buffer, -thread pipes entire threads.
                 fi
                 cmd=$1
                 eval "set -- $shown_files"
-                printf '%s\n' "$@" | eval "$cmd" >&2
+                mseq -f -- "$@" | eval "$cmd" >&2
             else {
                 cat <<'EOF'
                 mblaze-apply-command-and-refresh evaluate-commands %{

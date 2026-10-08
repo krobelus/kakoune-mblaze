@@ -9,7 +9,7 @@ selections_desc=$3
 echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_shown_files}" >"$kak_command_fifo"
 eval "set -- $(cat "$kak_response_fifo")"
 if [ "$#" -ne 0 ]; then
-    printf '%s\n' "$@"
+    mseq -f -- "$@"
 else
     "${kak_opt_mblaze_source%/*}"/mblaze-list-files \
         kak_command_fifo kak_response_fifo "$selections_desc"
