@@ -12,8 +12,8 @@ fi
 [ "$2" = kak_response_fifo ]
 selection_descs=$3
 
-mailseq=$(mktemp ${TMPDIR:-/tmp}/kak-mblaze-list-files.XXXXXX)
-echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_scanned_files}" >$kak_command_fifo
+mailseq=$(mktemp ${TMPDIR:-/tmp}/kak-mblaze-selected-messages.XXXXXX)
+echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_scanned_messages}" >$kak_command_fifo
 eval "set -- $(cat $kak_response_fifo)"
 printf '%s\n' "$@" >"$mailseq"
 set -- $(

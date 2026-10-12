@@ -64,7 +64,7 @@ All optional arguments are forwarded to the mshow utility.
         set-option global mblaze_show_args %arg{@}
         evaluate-commands %sh{
             set -- $(
-                "${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+                "${kak_opt_mblaze_source%/*}"/mblaze-messages-in-context \
                     kak_command_fifo kak_response_fifo "$kak_selections_desc" |
                     sed "s/'/''/g; s/^/'/; s/\$/'/"
             )
@@ -80,7 +80,7 @@ All optional arguments are forwarded to the mshow utility.
             }
             execute-keys !<ret>gg
             set-option buffer filetype mail
-            set-option buffer mblaze_shown_files %reg{f}
+            set-option buffer mblaze_shown_messages %reg{f}
             try %{
                 add-highlighter buffer/mblaze-show wrap -word -marker '↪'
             }
@@ -106,15 +106,15 @@ In a scan buffer, -thread pipes entire threads.
     evaluate-commands -draft -save-regs a %{
         set-register a %arg{@}
         evaluate-commands %sh{
-            echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_shown_files}" >$kak_command_fifo
-            shown_files=$(cat $kak_response_fifo)
-            if [ -n "$shown_files" ]; then
+            echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_shown_messages}" >$kak_command_fifo
+            shown_messages=$(cat $kak_response_fifo)
+            if [ -n "$shown_messages" ]; then
                 if [ "$1" = -thread ]; then
                     echo 'fail -- %{-thread is not supported from a show buffer}'
                     exit
                 fi
                 cmd=$1
-                eval "set -- $shown_files"
+                eval "set -- $shown_messages"
                 mseq -f -- "$@" | eval "$cmd" >&2
             else {
                 cat <<'EOF'
@@ -127,7 +127,7 @@ In a scan buffer, -thread pipes entire threads.
                             shift
                         fi
                         cmd=$1
-                        "${kak_opt_mblaze_source%/*}"/mblaze-list-files $thread \
+                        "${kak_opt_mblaze_source%/*}"/mblaze-selected-messages $thread \
                             kak_command_fifo kak_response_fifo "$kak_selections_desc" |
                             eval "$cmd" >&2
                     }
@@ -223,16 +223,16 @@ for each argument, call mblaze-open-mime-part with three arguments:
 3. its MIME type.
 } %{
     evaluate-commands %sh{
-        message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+        message=$("${kak_opt_mblaze_source%/*}"/mblaze-messages-in-context \
             kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
-        if [ -z "$message_file" ]; then
-            echo 'fail %{missing message file, see :doc mblaze messages-in-context}'
+        if [ -z "$message" ]; then
+            echo 'fail %{missing message, see :doc mblaze messages-in-context}'
             exit 1
         fi
         kakquote() {
             printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
         }
-        mshow=$(mshow -n -t "$message_file")
+        mshow=$(mshow -n -t "$message")
         for i in $(seq $#)
         do
             eval "name=\$$i"
@@ -247,7 +247,7 @@ for each argument, call mblaze-open-mime-part with three arguments:
                     }
                 '
             )
-            printf '%s\n' "mblaze-open-mime-part $(kakquote "$message_file") %arg{$i} $(kakquote "$mime_type")"
+            printf '%s\n' "mblaze-open-mime-part $(kakquote "$message") %arg{$i} $(kakquote "$mime_type")"
         done
     }
 }
@@ -256,7 +256,7 @@ complete-command mblaze-open-named-mime-parts shell-script-candidates %{
     mkfifo $tmpdir/fifo
     echo 'evaluate-commands -client '$kak_client' %{
         nop %sh{
-            set -- $("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+            set -- $("${kak_opt_mblaze_source%/*}"/mblaze-messages-in-context \
                         kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
             [ $# -eq 1 ] || exit
             mshow -n -t "$1" | awk '\''
@@ -280,14 +280,14 @@ call mblaze-open-mime-part with three arguments:
 3. the MIME type ('text/html')
 } %{
     evaluate-commands %sh{
-        message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+        message=$("${kak_opt_mblaze_source%/*}"/mblaze-messages-in-context \
             kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}" | sed -n '1p')
-        if [ -z "$message_file" ]; then
-            echo "fail %{missing message file, see :doc mblaze messages-in-context}"
+        if [ -z "$message" ]; then
+            echo "fail %{missing message, see :doc mblaze messages-in-context}"
             exit 1
         fi
         html_part=$(
-            mshow -n -t "$message_file" |
+            mshow -n -t "$message" |
                 awk  '$2 == "text/html" && !/name=/ { print $1 }'
         )
         if [ -z "$html_part" ]; then
@@ -301,7 +301,7 @@ call mblaze-open-mime-part with three arguments:
         kakquote() {
             printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
         }
-        printf '%s\n' "mblaze-open-mime-part $(kakquote "$message_file") ${html_part%:} text/html"
+        printf '%s\n' "mblaze-open-mime-part $(kakquote "$message") ${html_part%:} text/html"
     }
 }
 
@@ -312,14 +312,14 @@ define-command -hidden mblaze-scan-populate -params 1 %{
         set-register a %arg{1}
         set-register | %exp{
             exec <&-
-            files=$(
+            messages=$(
                 %arg{1}
             )
             %{
-                echo >${kak_command_fifo} "set-option buffer mblaze_scanned_files $(
-                    printf %s "$files" | sed "s/'/''/g; s/^/'/; s/$/'/" | tr '\n' ' '
+                echo >${kak_command_fifo} "set-option buffer mblaze_scanned_messages $(
+                    printf %s "$messages" | sed "s/'/''/g; s/^/'/; s/$/'/" | tr '\n' ' '
                 )"
-                printf %s "$files" | COLUMNS=100000 mscan
+                printf %s "$messages" | COLUMNS=100000 mscan
             }
         }
         set-option buffer readonly false
@@ -363,19 +363,19 @@ define-command -hidden mblaze-draft-start -params 1.. %{
             printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
         }
         case "$1" in (mrep | mfwd) {
-            if ! message_files=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
+            if ! messages=$("${kak_opt_mblaze_source%/*}"/mblaze-messages-in-context \
                 kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
             then {
-                echo 'fail %{failed to find message file}'
+                echo 'fail %{failed to list messages}'
                 exit
             } fi
-            if [ -z "$message_files" ]; then
-                echo 'fail %{missing message file, see :doc mblaze messages-in-context}'
+            if [ -z "$messages" ]; then
+                echo 'fail %{missing message, see :doc mblaze messages-in-context}'
                 exit
             fi
             ifs=$IFS
             IFS=$'\n'
-            set -- "$@" -- $message_files
+            set -- "$@" -- $messages
             IFS=$ifs
         } ;; esac
         mcom_dir=$(mktemp -d "${TMPDIR:-/tmp}/kakoune-mblaze-"$1".XXXXXX")
@@ -436,7 +436,7 @@ define-command -hidden mblaze-next-or-previous-thread -params 1 %{
         else
             plus_minus=- movement=k limit=1
         fi
-        echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_scanned_files}" >$kak_command_fifo
+        echo "echo -to-file $kak_response_fifo -quoting shell -- %opt{mblaze_scanned_messages}" >$kak_command_fifo
         eval "set -- $(cat $kak_response_fifo)"
         i=$kak_cursor_line
         delta=0
@@ -458,12 +458,12 @@ define-command -hidden mblaze-next-or-previous-thread -params 1 %{
 declare-option -hidden str mblaze_source %val{source}
 
 # For mblaze-scan
-declare-option -hidden str-list mblaze_scanned_files
+declare-option -hidden str-list mblaze_scanned_messages
 declare-option -hidden str-list mblaze_list_command
 
 # For mblaze-show
 declare-option -hidden str-list mblaze_show_args
-declare-option -hidden str-list mblaze_shown_files
+declare-option -hidden str-list mblaze_shown_messages
 declare-option -hidden str mblaze_effective_show_client
 declare-option -hidden str mblaze_show_buffer_name
 
