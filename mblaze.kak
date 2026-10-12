@@ -229,7 +229,7 @@ for each argument, call mblaze-open-mime-part with three arguments:
         message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
             kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
         if [ -z "$message_file" ]; then
-            echo 'fail %{missing message file}'
+            echo 'fail %{missing message file, see :doc mblaze messages-in-context}'
             exit 1
         fi
         kakquote() {
@@ -286,7 +286,7 @@ call mblaze-open-mime-part with three arguments:
         message_file=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
             kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}" | sed -n '1p')
         if [ -z "$message_file" ]; then
-            echo "fail %{missing message file}"
+            echo "fail %{missing message file, see :doc mblaze messages-in-context}"
             exit 1
         fi
         html_part=$(
@@ -364,7 +364,7 @@ define-command -hidden mblaze-draft-message -params 1.. %{
                 exit
             } fi
             if [ -z "$message_files" ]; then
-                echo 'fail %{missing message file}'
+                echo 'fail %{missing message file, see :doc mblaze messages-in-context}'
                 exit
             fi
             kakquote() {
