@@ -175,7 +175,7 @@ define-command mblaze-compose -params .. -docstring %{
 mblaze-compose [<mcom_arguments>]: compose a new message.
 All optional arguments are forwarded to mcom.
 } %{
-    mblaze-draft-message mcom %arg{@}
+    mblaze-draft-start mcom %arg{@}
 }
 
 define-command mblaze-reply -params .. -docstring %{
@@ -185,7 +185,7 @@ In a show buffer, reply to its single message.
 In a scan buffer, reply to the message at the main cursor.
 All optional arguments are forwarded to mrep.
 } %{
-    mblaze-draft-message mrep %arg{@}
+    mblaze-draft-start mrep %arg{@}
 }
 
 define-command mblaze-forward -params .. -docstring %{
@@ -195,25 +195,22 @@ In a show buffer, forward its single message.
 In a scan buffer, forward the message at the main cursor.
 All optional arguments are forwarded to mfwd.
 } %{
-    mblaze-draft-message mfwd %arg{@}
+    mblaze-draft-start mfwd %arg{@}
 }
 
 define-command mblaze-send -docstring %{
-send the current draft buffer with mcom
+finish editing the current draft and have mcom/mrep/mfwd send it
 } %{
     evaluate-commands %sh{
-        if ! mcom -send -r "${kak_buffile}" >&2; then
-            echo "fail %{failed to send email, see *debug* buffer}"
-            exit
+        if [ -z "$kak_opt_mblaze_mcom_dir" ]; then
+            echo 'fail %{must be called in a buffer created by mblaze-compose, mblaze-reply or mblaze-forward}'
         fi
-        if [ -n "$kak_opt_mblaze_on_sent" ]; then
-            eval "set -- $kak_quoted_opt_mblaze_on_sent"
-            "$@" >&2
-            mseq -f | mseq -S >&2
-            echo "set-option buffer mblaze_on_sent"
-        fi
-        echo "delete-buffer %val{buffile}"
     }
+    write -method replace
+    remove-hooks buffer mblaze-draft-cancel
+    mblaze-draft-finish send
+    delete-buffer
+    echo -markup '{Information}Message sent'
 }
 
 ### MIME parts ###
@@ -349,14 +346,23 @@ define-command -hidden mblaze-apply-command-and-refresh -params 1.. %{
         set-option buffer readonly false
         mblaze-scan-populate %opt{mblaze_list_command}
         select %reg{s}
-        echo -markup {Information}Reloaded
+        echo -markup {Information}reloaded
     }
 }
 
-define-command -hidden mblaze-draft-message -params 1.. %{
+define-command -hidden mblaze-draft-start -params 1.. %{
     evaluate-commands %sh{
-        case "$1" in
-        (mrep | mfwd) {
+        for arg
+        do
+            if [ "$arg" = -send ]; then
+                echo 'fail %{the -send option is not supported, use mblaze-send instead}'
+                exit
+            fi
+        done
+        kakquote() {
+            printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
+        }
+        case "$1" in (mrep | mfwd) {
             if ! message_files=$("${kak_opt_mblaze_source%/*}"/mblaze-current-files \
                 kak_command_fifo kak_response_fifo "${kak_selections_desc%% *}")
             then {
@@ -367,39 +373,57 @@ define-command -hidden mblaze-draft-message -params 1.. %{
                 echo 'fail %{missing message file, see :doc mblaze messages-in-context}'
                 exit
             fi
-            kakquote() {
-                printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
-            }
             ifs=$IFS
             IFS=$'\n'
             set -- "$@" -- $message_files
-            set_on_send=$(
-                printf 'set-option buffer mblaze_on_sent mflag -%s --' \
-                    $(case "$1" in (mrep) echo R;; (mfwd) echo P;; esac)
-                for message_file in $message_files
-                do
-                    printf ' %s' "$(kakquote "$message_file")"
-                done
-            )
             IFS=$ifs
-        } ;;
-        (*)
-            set_on_send=
-            ;;
-        esac
-        editor=$(mktemp ${TMPDIR:-/tmp}/kakoune-mblaze-draft-message.XXXXXX)
+        } ;; esac
+        mcom_dir=$(mktemp -d "${TMPDIR:-/tmp}/kakoune-mblaze-"$1".XXXXXX")
+        editor=$mcom_dir/editor
+        edit_done=$mcom_dir/editor-done
+        stdin=$mcom_dir/stdin
+        exit_status=$mcom_dir/exit-status
         echo >"$editor" '#!/bin/sh
-            echo >$kak_response_fifo "$@"'
+echo >$kak_response_fifo "$@"
+<'"$edit_done"
+        mkfifo $stdin $edit_done $exit_status
         chmod +x $editor
-        printf c | MBLAZE_EDITOR=$editor "$@" >/dev/null &
+        (
+            {
+                cat $stdin | MBLAZE_EDITOR=$editor "$@"
+                echo $? >$exit_status
+            } 2>&1 |
+                sed 's/^What now? ([^)]*) //' |
+                while IFS=$'\n' read -r line
+            do
+                printf %s "echo -debug $(kakquote "$1 output: $line")" | kak -p $kak_session
+            done
+        ) </dev/null >/dev/null 2>&1 &
         draft=$(cat $kak_response_fifo)
-        wait
-        rm "$editor"
-        kakquote() {
-            printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
-        }
-        printf '%s\n' "edit $(kakquote "$draft")"
-        printf '%s\n' "$set_on_send"
+        printf %s "
+            edit $(kakquote "$draft")
+            set-option buffer mblaze_mcom_dir $(kakquote "$mcom_dir")
+            hook -always -once -group mblaze-draft-cancel buffer BufClose .* %{
+                mblaze-draft-finish cancel
+            }
+        "
+    }
+}
+
+define-command -hidden mblaze-draft-finish -params 1 %{
+    evaluate-commands %sh{
+        mcom_dir=$kak_opt_mblaze_mcom_dir
+        >"$mcom_dir/editor-done"
+        printf '%s\n' "$1" >"$mcom_dir/stdin"
+        echo "unset-option buffer mblaze_mcom_dir" # double send is not supported
+        if [ "$(cat "$mcom_dir/exit-status")" != 0 ] && [ "$1" = send ]; then
+            echo "
+                edit!
+                fail %{failed to send message, see *debug* buffer}"
+            exit
+        fi
+        rm "$mcom_dir/editor" "$mcom_dir/editor-done" "$mcom_dir/stdin" "$mcom_dir/exit-status"
+        rmdir "$mcom_dir"
     }
 }
 
@@ -443,5 +467,5 @@ declare-option -hidden str-list mblaze_shown_files
 declare-option -hidden str mblaze_effective_show_client
 declare-option -hidden str mblaze_show_buffer_name
 
-# For mblaze-reply, mblaze-forward, mblaze-send
-declare-option -hidden str-list mblaze_on_sent
+# For mblaze-compose, mblaze-reply, mblaze-forward, mblaze-send
+declare-option -hidden str mblaze_mcom_dir
