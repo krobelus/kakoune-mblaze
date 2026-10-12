@@ -31,9 +31,9 @@ Inside `\*mblaze-scan*`, you can run
 * `mblaze-refresh` to update a scan buffer by re-running its command
 * `mblaze-next-thread` or `mblaze-previous-thread` to move the main cursor to the next or previous thread start
 
-=== Current message(s)
+=== Messages in context
 
-Most `mblaze-*` commands operate on the "current message(s)", which is defined as follows:
+Most `mblaze-*` commands operate on the "context's message(s)", which is defined as follows:
 
 * in an `\*mblaze-scan*` buffer, the messages covered by the selections.
   Commands that operate on only one message only consider the main cursor.
@@ -41,9 +41,9 @@ Most `mblaze-*` commands operate on the "current message(s)", which is defined a
   Commands that operate on only one message currently fail in show buffers
   where multiple messages are shown.
 
-=== Auto-rendering the current message
+=== Auto-rendering the context's message
 
-To show the <<current-message(s),current message>> in another client as you
+To show the <<messages-in-context,context's message>> in another client as you
 browse a scan buffer, set `mblaze_autoshow_client`.  For example:
 
 [source,kak]
@@ -52,9 +52,9 @@ mblaze-scan %{ mlist $(mdirs) | mthread }
 new evaluate-commands %{ set-option global mblaze_autoshow_client %val{client} }
 ----
 
-=== Passing current messages to shell commands
+=== Passing the context's messages to shell commands
 
-`mblaze-pipe-to <command>` writes the <<current-message(s),current messages>>
+`mblaze-pipe-to <command>` writes the <<messages-in-context,context's messages>>
 to the given command's standard input, one filename per line, and then calls
 `mblaze-refresh` if called from a scan buffer.
 The command's output is currently shown in the `\*debug*` buffer.
@@ -76,17 +76,17 @@ option, to pipe whole threads.
 `mblaze-compose` wraps `mcom(1)` to create a draft message and edits it.
 
 `mblaze-reply` and `mblaze-forward` wrap `mrep(1)` and `mfwd(1)` to create and
-edit a draft reply to or forward of the <<current-message(s),current message>>.
+edit a draft reply to or forward of the <<messages-in-context,context's messages>>.
 
 `mblaze-send` sends the message draft in the current buffer with `mcom(1)`.
 
 === MIME parts
 
 `mblaze-open-named-mime-parts <part_filename>...` opens the given named MIME
-parts (such as attachments) from the current message.
+parts (such as attachments) from the <<messages-in-context,context's message>>.
 
 `mblaze-open-html-mime-part` opens the unique unnamed `text/html` part of
-the current message.
+the <<messages-in-context,context's message>>.
 
 Both commands call `mblaze-open-mime-part <message_file> <part> <mime_type>`
 which needs to be overridden by the user.  For example, to save MIME parts

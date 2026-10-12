@@ -55,8 +55,8 @@ move to the previous thread start in a scan buffer.
 }
 
 define-command mblaze-show -params .. -docstring %{
-mblaze-show [<mshow_arguments>]: render current messages in a scratch buffer.
-See ':doc mblaze current-message(s)'.
+mblaze-show [<mshow_arguments>]: render context's messages in a scratch buffer.
+See ':doc mblaze context's-message(s)'.
 All optional arguments are forwarded to the mshow utility.
 } %{
     evaluate-commands -save-regs bf %{
@@ -97,8 +97,8 @@ updates the current mblaze-scan buffer by re-running its command
 ### Operating on messages ###
 
 define-command mblaze-pipe-to -params 1..2 -docstring %{
-mblaze-pipe-to [-thread] <shell_command>: pipe current message filenames to
-a shell command.
+mblaze-pipe-to [-thread] <shell_command>: pipe the context's messages'
+filenames to a shell command.
 
 In a scan buffer, refresh the listing afterwards.
 In a scan buffer, -thread pipes entire threads.
@@ -142,7 +142,7 @@ complete-command mblaze-pipe-to shell
 define-command mblaze-refile -params 1..2 -docstring %{
 mblaze-refile [-thread] <maildir_folder>: move selected messages to a maildir folder.
 
-move the current messages. With -thread, move entire threads.
+move the context's messages to <maildir_folder>. With -thread, move entire threads.
 } %{
     evaluate-commands %sh{
         thread=
@@ -179,7 +179,7 @@ All optional arguments are forwarded to mcom.
 }
 
 define-command mblaze-reply -params .. -docstring %{
-mblaze-reply [<mrep_arguments>]: reply to the current message.
+mblaze-reply [<mrep_arguments>]: reply to the context's message.
 
 In a show buffer, reply to its single message.
 In a scan buffer, reply to the message at the main cursor.
@@ -189,7 +189,7 @@ All optional arguments are forwarded to mrep.
 }
 
 define-command mblaze-forward -params .. -docstring %{
-mblaze-forward [<mfwd_arguments>]: forward the current message.
+mblaze-forward [<mfwd_arguments>]: forward the context's messages.
 
 In a show buffer, forward its single message.
 In a scan buffer, forward the message at the main cursor.
@@ -221,7 +221,7 @@ send the current draft buffer with mcom
 define-command mblaze-open-named-mime-parts -params 1.. -docstring %{
 mblaze-open-named-mime-parts <part_filenames>...:
 for each argument, call mblaze-open-mime-part with three arguments:
-1. the current message's filename
+1. the context's message's filename
 2. the given part filename argument
 3. its MIME type.
 } %{
@@ -276,7 +276,7 @@ complete-command mblaze-open-named-mime-parts shell-script-candidates %{
 }
 
 define-command mblaze-open-html-mime-part -docstring %{
-Provided the current message has a single unnamed text/html MIME part,
+Provided the context's message has a single unnamed text/html MIME part,
 call mblaze-open-mime-part with three arguments:
 1. the message filename
 2. the part number
