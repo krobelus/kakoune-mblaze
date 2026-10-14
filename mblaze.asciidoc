@@ -65,10 +65,8 @@ For example:
 mblaze-pipe-to %{ mrefile "$(mhdr -h maildir ~/.mblaze/profile)"/archive }
 ----
 
-For this `mrefile` use case, there is a convenience wrapper `mblaze-refile <maildir_folder>`.
-
 In a scan buffer with a threaded view as created by `mthread(1)`, the
-`mblaze-pipe-to` and `mblaze-refile` commands can be passed the `-thread`
+`mblaze-pipe-to` command can be passed the `-thread`
 option, to pipe whole threads.
 
 === Writing messages

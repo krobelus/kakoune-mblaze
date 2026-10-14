@@ -139,36 +139,6 @@ EOF
 }
 complete-command mblaze-pipe-to shell
 
-define-command mblaze-refile -params 1..2 -docstring %{
-mblaze-refile [-thread] <maildir_folder>: move selected messages to a maildir folder.
-
-move the context's messages to <maildir_folder>. With -thread, move entire threads.
-} %{
-    evaluate-commands %sh{
-        thread=
-        dest=%arg{1}
-        if [ $# -eq 2 ]; then {
-            if [ "$1" != -thread ]; then {
-                echo "fail %{unexpected argument}"
-                exit 1
-            } fi
-            dest=%arg{2}
-            thread=-thread
-        } fi
-        echo "mblaze-pipe-to $thread %exp{ mrefile $dest }"
-    }
-}
-complete-command mblaze-refile shell-script-candidates %{
-    has_thread=false
-    for arg; do
-        if [ "$arg" = -thread ]; then has_thread=true; fi
-    done
-    if ! $has_thread; then
-        echo -thread
-    fi
-    mdirs
-}
-
 ### Writing messages ###
 
 define-command mblaze-compose -params .. -docstring %{
